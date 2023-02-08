@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 
-public class ProducerWithCallbackDemo {
+public class ProducerKeysDemo {
 
     //    add a logger to the producer
-    private static final Logger log = LoggerFactory.getLogger(ProducerWithCallbackDemo.class.getSimpleName());
+    private static final Logger log = LoggerFactory.getLogger(ProducerKeysDemo.class.getSimpleName());
 
     public static void main(String[] args) {
 
@@ -25,40 +25,34 @@ public class ProducerWithCallbackDemo {
         // connect to localhost
         properties.setProperty("bootstrap.servers", "127.0.0.1:9092");
 
-        // connect to cluster
-/*
-        properties.setProperty("bootstrap.servers", "cluster.playground.cdkt.io:9092");
-        properties.setProperty("security.protocol", "SASL_SSL");
-        properties.setProperty("sasl.jaas.config", "org.apache.kafka.security.plain.PlainLoginModule required username=etc.");
-        properties.setProperty("sasl.mechanism", "PLAIN");
-*/
-
-        //        set Producer properties
+        // set Producer properties
         properties.setProperty("key.serializer", StringSerializer.class.getName());
         properties.setProperty("value.serializer", StringSerializer.class.getName());
 
-        properties.setProperty("batch.size", "400");
-
-        //        create Producer
+        // create Producer
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
 
-        for (int j = 0; j < 10; j++) {
-            for (int i = 0; i < 30; i++) {
-                //        create a Producer Record
-                ProducerRecord<String, String> producerRecord = new ProducerRecord<>("demo_java", "hello world with callback #" + j + "." + i);
+        for (int j = 0; j < 2; j++) {
+            for (int i = 0; i < 10; i++) {
+                // set the topic string
+                String topic = "demo_java";
+                // set the key string
+                String key = "id_" + i;
+                // set the value to be produced
+                String value = "hello world " + i;
 
-                //        send (produce) data
+
+                // create a Producer Record
+                ProducerRecord<String, String> producerRecord = new ProducerRecord<>(topic, key, value);
+
+                // send (produce) data
                 producer.send(producerRecord, new Callback() {
                     @Override
                     public void onCompletion(RecordMetadata metadata, Exception e) {
                         // executes every time a record is successfully sent or an exception is thrown
                         if (e == null) {
                             // record was successfully sent
-                            log.info("Received new metadata\n" +
-                                    "Topic: " + metadata.topic() + "\n" +
-                                    "Partition: " + metadata.partition() + "\n" +
-                                    "Offset: " + metadata.offset() + "\n" +
-                                    "Timestamp: " + metadata.timestamp());
+                            log.info("Received new metadata: " + "Key: " + key + " | Partition: " + metadata.partition());
                         } else {
                             // an error occurred while producing
                             log.error("Error while producing: ", e);
@@ -66,17 +60,17 @@ public class ProducerWithCallbackDemo {
                     }
                 });
 
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
-        //        tell producer to send all data and block until done -- synchronous
+        // tell producer to send all data and block until done -- synchronous
         producer.flush();
 
-        //        flush and close the producer
+        // flush and close the producer
         producer.close();
 
     }
