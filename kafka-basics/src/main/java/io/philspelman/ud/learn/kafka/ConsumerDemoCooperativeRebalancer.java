@@ -2,6 +2,7 @@ package io.philspelman.ud.learn.kafka;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.CooperativeStickyAssignor;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -12,10 +13,10 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Properties;
 
-public class ConsumerDemoWithShutdown {
+public class ConsumerDemoCooperativeRebalancer {
 
     //    add a logger to the producer
-    private static final Logger log = LoggerFactory.getLogger(ConsumerDemoWithShutdown.class.getSimpleName());
+    private static final Logger log = LoggerFactory.getLogger(ConsumerDemoCooperativeRebalancer.class.getSimpleName());
 
     public static void main(String[] args) {
 
@@ -43,6 +44,9 @@ public class ConsumerDemoWithShutdown {
 
         // set the offset from which to consume
         properties.setProperty("auto.offset.reset", "earliest");
+
+        // specify using the cooperative sticky assignor
+        properties.setProperty("partition.assignment.strategy", CooperativeStickyAssignor.class.getName());
 
         // create a consumer
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
